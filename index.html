@@ -6,7 +6,7 @@
 <body>
     <h1>Audio Playlist</h1>
     
-    <audio id="audioPlayer" controls autoplay>
+    <audio id="audioPlayer" controls>
         Your browser does not support the audio element.
     </audio>
     
@@ -15,28 +15,40 @@
     <ul id="playlist">
     </ul>
 
+    <button id="stopAutoPlay">Stop Auto Play</button>
+
     <script>
         const playlist = document.getElementById("playlist");
         const audioPlayer = document.getElementById("audioPlayer");
         const currentTrackElement = document.getElementById("currentTrack");
+        const stopAutoPlayButton = document.getElementById("stopAutoPlay");
 
         let currentTrack = 0;
         let audioFiles = [];
+        let autoPlay = true;
 
         // Replace this with your JSON data containing paths and titles
         const jsonPlaylist = [
-            {
-                path: "5-02 Lech Lecha-1 02.mp3",
-                title: "Lech Lecha 1"
-            },
-            {
-                path: "5-03 Lech Lecha-1 03.mp3",
-                title: "Lech Lecha  2"
-            },
-            {
+        {
                 path: "5-04 Lech Lecha-1 04.mp3",
-                title: "Lech Lecha  3"
-            }
+                title: "Lech Lecha 4"
+            },
+            {
+                path: "6-01 Lech Lecha-2 01.mp3",
+                title: "Lech Lecha 5"
+            },
+            {
+                path: "6-02 Lech Lecha-2 02.mp3",
+                title: "Lech Lecha 6"
+            },
+            {
+                path: "6-03 Lech Lecha-2 03.mp3",
+                title: "Lech Lecha 7"
+            },
+            {
+                path: "6-04 Lech Lecha-2 04.mp3",
+                title: "Lech Lecha 8"
+            },
         ];
 
         // Create the playlist from the JSON data
@@ -51,17 +63,10 @@
         });
 
         function playTrack(trackIndex) {
-            if (trackIndex < audioFiles.length) {
-                audioPlayer.src = audioFiles[trackIndex];
-                audioPlayer.play();
-                currentTrack = trackIndex;
-                currentTrackElement.textContent = jsonPlaylist[currentTrack].title;
-            } else {
-                // End of playlist
-                currentTrack = 0;
-                audioPlayer.src = audioFiles[currentTrack];
-                currentTrackElement.textContent = jsonPlaylist[currentTrack].title;
-            }
+            audioPlayer.src = audioFiles[trackIndex];
+            audioPlayer.play();
+            currentTrack = trackIndex;
+            currentTrackElement.textContent = jsonPlaylist[currentTrack].title;
         }
 
         // Play the first track when the page loads
@@ -70,15 +75,29 @@
         audioPlayer.addEventListener("ended", function () {
             // Play the next track when the current one ends
             currentTrack++;
-            playTrack(currentTrack);
+            if (currentTrack < audioFiles.length) {
+                playTrack(currentTrack);
+            } else {
+                // Loop back to the first track when the last track ends
+                currentTrack = 0;
+                playTrack(currentTrack);
+            }
+
+            // Stop auto play after the current track if the button is clicked
+            if (!autoPlay) {
+                audioPlayer.pause();
+            }
         });
 
         playlist.addEventListener("click", function (e) {
             e.preventDefault();
             if (e.target.tagName === "A") {
-                const trackIndex = Array.from(playlist.children).indexOf(e.target.parentElement);
-                playTrack(trackIndex);
+                playTrack(Array.from(playlist.children).indexOf(e.target.parentElement));
             }
+        });
+
+        stopAutoPlayButton.addEventListener("click", function () {
+            autoPlay = false;
         });
     </script>
 </body>
