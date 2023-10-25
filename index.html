@@ -18,8 +18,6 @@
 
     <button id="toggleAutoPlay">Toggle Auto Play</button>
 
-    <script src="id3-parser.min.js"></script>
-
     <script>
         const playlist = document.getElementById("playlist");
         const audioPlayer = document.getElementById("audioPlayer");
@@ -44,9 +42,10 @@
                 loadAndPlay(mp3Files[currentTrack]);
                 currentTrack++;
             } else {
-                // If the last track is reached, loop back to the first track
+                // If the last track is reached, stop playback
                 currentTrack = 0;
-                loadAndPlay(mp3Files[currentTrack]);
+                audioPlayer.pause();
+                currentTrackElement.textContent = "Playlist Ended";
             }
         }
 
@@ -55,9 +54,7 @@
             fetch(mp3File)
                 .then(response => response.arrayBuffer())
                 .then(data => {
-                    const parser = new ID3Parser(data);
-                    parser.parse();
-                    const title = parser.getID3v1Tag().title || "Unknown Title";
+                    const title = extractID3v1Title(data) || "Unknown Title";
                     currentTrackElement.textContent = title;
                     audioPlayer.src = URL.createObjectURL(new Blob([data], { type: "audio/mpeg" }));
                     audioPlayer.load();
@@ -67,6 +64,31 @@
                 })
                 .catch(error => console.error("Error loading MP3 file", error));
         }
+
+        // Function to extract the title from the ID3v1 tag
+        function extractID3v1Title(data) {
+            const id3v1Tag = new DataView(data, data.byteLength - 128, 128);
+            const tagIdentifier = String.fromCharCode(id3v1Tag.getUint8(0)) +
+                String.fromCharCode(id3v1Tag.getUint8(1)) +
+                String.fromCharCode(id3v1Tag.getUint8(2));
+            
+            if (tagIdentifier === "TAG") {
+                const title = String.fromCharCode.apply(null, new Uint8Array(id3v1Tag.buffer, 3, 30));
+                return title.replace(/\0/g, ''); // Remove null characters
+            }
+
+            return null;
+        }
+
+        // Populate the playlist with the files
+        mp3Files.forEach((file, index) => {
+            const li = document.createElement("li");
+            li.textContent = file;
+            li.addEventListener("click", function () {
+                loadAndPlay(file);
+            });
+            playlist.appendChild(li);
+        });
 
         // Play the first track when the page loads
         playNextTrack();
